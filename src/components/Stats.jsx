@@ -9,6 +9,7 @@ export function Stats({
   limitsExceeded
 }) {
   const formatLimit = (max) => max > 0 ? `/ ${max}` : '';
+  const hasMissingJoints = stats.joints1 > 0;
 
   return (
     <div className="panel">
@@ -50,22 +51,29 @@ export function Stats({
             )}
           </div>
         </div>
+
+        {hasMissingJoints && (
+          <div className="stat-item">
+            <span className="stat-label">Missing Joints</span>
+            <span className="stat-value warning">{stats.joints1}</span>
+          </div>
+        )}
       </div>
 
       <div className="panel-section">
         <h3>Legend</h3>
         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
           <p style={{ marginBottom: '0.5rem' }}>
+            <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--warning)', marginRight: '0.5rem' }}></span>
+            Missing joint (dead end)
+          </p>
+          <p style={{ marginBottom: '0.5rem' }}>
             <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--accent)', marginRight: '0.5rem' }}></span>
             2-joint vertex
           </p>
-          <p style={{ marginBottom: '0.5rem' }}>
+          <p>
             <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--success)', marginRight: '0.5rem' }}></span>
             3+ joint vertex
-          </p>
-          <p>
-            <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--warning)', marginRight: '0.5rem' }}></span>
-            Limit exceeded
           </p>
         </div>
       </div>

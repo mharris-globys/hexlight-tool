@@ -423,6 +423,10 @@ button.danger:hover {
   transition: fill 0.1s ease;
 }
 
+.hex-vertex.missing {
+  fill: var(--warning);
+}
+
 .hex-vertex.active-2 {
   fill: var(--accent);
 }

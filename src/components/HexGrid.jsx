@@ -26,7 +26,8 @@ export function HexGrid({
     for (const [key, vertex] of vertices) {
       const jointCount = jointCounts?.get(key) || 0;
       let className = 'hex-vertex';
-      if (jointCount === 2) className += ' active-2';
+      if (jointCount === 1) className += ' missing';
+      else if (jointCount === 2) className += ' active-2';
       else if (jointCount >= 3) className += ' active-3';
 
       elements.push(

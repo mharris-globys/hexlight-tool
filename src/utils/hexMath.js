@@ -436,13 +436,15 @@ export function calculateStats(enabledEdges, allEdges) {
     }
   }
 
+  let joints1 = 0;  // "Missing" joints - dangling edges
   let joints2 = 0;
   let joints3 = 0;
 
   for (const count of jointCounts.values()) {
-    if (count === 2) joints2++;
+    if (count === 1) joints1++;
+    else if (count === 2) joints2++;
     else if (count >= 3) joints3++;
   }
 
-  return { segments, joints2, joints3, jointCounts };
+  return { segments, joints1, joints2, joints3, jointCounts };
 }
