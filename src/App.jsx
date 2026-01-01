@@ -15,13 +15,13 @@ function App() {
   const [units, setUnits] = useLocalStorage('hexlight-units', 'in');
 
   const {
-    // Configuration (all stored internally in inches)
-    widthInches,
-    setWidthInches,
-    lengthInches,
-    setLengthInches,
-    pointSpacing,
-    setPointSpacing,
+    // Configuration (internal storage: inches - see useHexGrid for details)
+    width,
+    setWidth,
+    length,
+    setLength,
+    spacing,
+    setSpacing,
     pointyTop,
     setPointyTop,
     mirrorMode,
@@ -90,12 +90,12 @@ function App() {
 
       <main className="main-content">
         <Controls
-          widthInches={widthInches}
-          setWidthInches={setWidthInches}
-          lengthInches={lengthInches}
-          setLengthInches={setLengthInches}
-          pointSpacing={pointSpacing}
-          setPointSpacing={setPointSpacing}
+          width={width}
+          setWidth={setWidth}
+          length={length}
+          setLength={setLength}
+          spacing={spacing}
+          setSpacing={setSpacing}
           pointyTop={pointyTop}
           setPointyTop={setPointyTop}
           mirrorMode={mirrorMode}
@@ -136,7 +136,7 @@ function App() {
           limitsExceeded={limitsExceeded}
           units={units}
           toDisplayUnits={toDisplayUnits}
-          pointSpacing={pointSpacing}
+          spacing={spacing}
           pixelSize={pixelSize}
         />
       </main>

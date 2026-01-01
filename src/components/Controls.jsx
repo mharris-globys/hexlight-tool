@@ -3,15 +3,17 @@ import { saveDesign, loadDesigns, deleteDesign } from '../hooks/useLocalStorage'
 
 /**
  * Controls panel component
- * All dimensions stored internally in inches, displayed in current units
+ *
+ * All dimensions are stored internally in INCHES (see useHexGrid).
+ * This component converts to/from display units (in/cm) for the UI.
  */
 export function Controls({
-  widthInches,
-  setWidthInches,
-  lengthInches,
-  setLengthInches,
-  pointSpacing,
-  setPointSpacing,
+  width,
+  setWidth,
+  length,
+  setLength,
+  spacing,
+  setSpacing,
   pointyTop,
   setPointyTop,
   mirrorMode,
@@ -32,9 +34,9 @@ export function Controls({
 }) {
   // Track previous values to detect changes
   const prevUnits = useRef(units);
-  const prevWidthInches = useRef(widthInches);
-  const prevLengthInches = useRef(lengthInches);
-  const prevPointSpacing = useRef(pointSpacing);
+  const prevWidth = useRef(width);
+  const prevLength = useRef(length);
+  const prevSpacing = useRef(spacing);
   const prevPointyTop = useRef(pointyTop);
 
   // Initialize directly from loadDesigns
@@ -44,30 +46,30 @@ export function Controls({
   // Pending values for "Create New" (start with current values in display units)
   // Store as strings to allow empty input during editing
   const [pendingOrientation, setPendingOrientation] = useState(pointyTop ? 'pointy' : 'flat');
-  const [pendingWidth, setPendingWidth] = useState(String(Math.round(toDisplayUnits(widthInches) * 100) / 100));
-  const [pendingLength, setPendingLength] = useState(String(Math.round(toDisplayUnits(lengthInches) * 100) / 100));
-  const [pendingSpacing, setPendingSpacing] = useState(String(Math.round(toDisplayUnits(pointSpacing) * 100) / 100));
+  const [pendingWidth, setPendingWidth] = useState(String(Math.round(toDisplayUnits(width) * 100) / 100));
+  const [pendingLength, setPendingLength] = useState(String(Math.round(toDisplayUnits(length) * 100) / 100));
+  const [pendingSpacing, setPendingSpacing] = useState(String(Math.round(toDisplayUnits(spacing) * 100) / 100));
 
   // Sync pending values when design state changes (e.g., loading a saved design)
   useEffect(() => {
     const stateChanged =
-      prevWidthInches.current !== widthInches ||
-      prevLengthInches.current !== lengthInches ||
-      prevPointSpacing.current !== pointSpacing ||
+      prevWidth.current !== width ||
+      prevLength.current !== length ||
+      prevSpacing.current !== spacing ||
       prevPointyTop.current !== pointyTop;
 
     if (stateChanged) {
       setPendingOrientation(pointyTop ? 'pointy' : 'flat');
-      setPendingWidth(String(Math.round(toDisplayUnits(widthInches) * 100) / 100));
-      setPendingLength(String(Math.round(toDisplayUnits(lengthInches) * 100) / 100));
-      setPendingSpacing(String(Math.round(toDisplayUnits(pointSpacing) * 100) / 100));
+      setPendingWidth(String(Math.round(toDisplayUnits(width) * 100) / 100));
+      setPendingLength(String(Math.round(toDisplayUnits(length) * 100) / 100));
+      setPendingSpacing(String(Math.round(toDisplayUnits(spacing) * 100) / 100));
 
-      prevWidthInches.current = widthInches;
-      prevLengthInches.current = lengthInches;
-      prevPointSpacing.current = pointSpacing;
+      prevWidth.current = width;
+      prevLength.current = length;
+      prevSpacing.current = spacing;
       prevPointyTop.current = pointyTop;
     }
-  }, [pointyTop, widthInches, lengthInches, pointSpacing, toDisplayUnits]);
+  }, [pointyTop, width, length, spacing, toDisplayUnits]);
 
   // Convert pending values when units change
   useEffect(() => {
@@ -204,14 +206,14 @@ export function Controls({
             if (newPointyTop !== pointyTop) {
               setPointyTop(newPointyTop);
             }
-            if (newWidth !== widthInches) {
-              setWidthInches(newWidth);
+            if (newWidth !== width) {
+              setWidth(newWidth);
             }
-            if (newLength !== lengthInches) {
-              setLengthInches(newLength);
+            if (newLength !== length) {
+              setLength(newLength);
             }
-            if (newSpacing !== pointSpacing) {
-              setPointSpacing(newSpacing);
+            if (newSpacing !== spacing) {
+              setSpacing(newSpacing);
             }
             onClear();
           }}
@@ -223,7 +225,7 @@ export function Controls({
         <div className="grid-info">
           Grid: {gridDimensions.cols}{gridDimensions.colsOdd !== gridDimensions.cols ? `/${gridDimensions.colsOdd}` : ''} × {gridDimensions.rows}{gridDimensions.rowsOdd !== gridDimensions.rows ? `/${gridDimensions.rowsOdd}` : ''} hexes<br />
           Actual: {toDisplayUnits(gridDimensions.actualWidth).toFixed(1)}{unitLabel} × {toDisplayUnits(gridDimensions.actualLength).toFixed(1)}{unitLabel}<br />
-          Point spacing: {toDisplayUnits(pointSpacing).toFixed(1)}{unitLabel} between points
+          Point spacing: {toDisplayUnits(spacing).toFixed(1)}{unitLabel} between points
         </div>
       </div>
 

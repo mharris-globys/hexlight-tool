@@ -1,5 +1,7 @@
 /**
  * Stats panel component
+ *
+ * Note: spacing is in inches (internal storage unit)
  */
 export function Stats({
   stats,
@@ -9,7 +11,7 @@ export function Stats({
   limitsExceeded,
   units,
   toDisplayUnits,
-  pointSpacing,
+  spacing,
   pixelSize
 }) {
   const formatLimit = (max) => max > 0 ? `/ ${max}` : '';
@@ -17,9 +19,9 @@ export function Stats({
   const unitLabel = units === 'cm' ? 'cm' : 'in';
 
   // Convert bounding box from pixels to real units
-  // pixels / pixelSize * pointSpacing = inches, then convert to display units
+  // pixels / pixelSize * spacing = inches, then convert to display units
   const pixelsToUnits = (pixels) => {
-    const inches = (pixels / pixelSize) * pointSpacing;
+    const inches = (pixels / pixelSize) * spacing;
     return toDisplayUnits(inches);
   };
 
