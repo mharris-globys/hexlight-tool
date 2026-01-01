@@ -204,7 +204,7 @@ export function Controls({
         </button>
 
         <div className="grid-info">
-          Grid: {gridDimensions.cols} × {gridDimensions.rows * 2} points<br />
+          Grid: {gridDimensions.cols}{gridDimensions.colsOdd !== gridDimensions.cols ? `/${gridDimensions.colsOdd}` : ''} × {gridDimensions.rows}{gridDimensions.rowsOdd !== gridDimensions.rows ? `/${gridDimensions.rowsOdd}` : ''} hexes<br />
           Actual: {toDisplayUnits(gridDimensions.actualWidth).toFixed(1)}{unitLabel} × {toDisplayUnits(gridDimensions.actualLength).toFixed(1)}{unitLabel}<br />
           Point spacing: {toDisplayUnits(pointSpacing).toFixed(1)}{unitLabel} between points
         </div>
