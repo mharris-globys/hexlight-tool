@@ -30,8 +30,12 @@ export function Controls({
   toDisplayUnits,
   toInches
 }) {
-  // Track previous units to detect changes
+  // Track previous values to detect changes
   const prevUnits = useRef(units);
+  const prevWidthInches = useRef(widthInches);
+  const prevLengthInches = useRef(lengthInches);
+  const prevPointSpacing = useRef(pointSpacing);
+  const prevPointyTop = useRef(pointyTop);
 
   // Initialize directly from loadDesigns
   const [savedDesigns, setSavedDesigns] = useState(() => loadDesigns());
@@ -44,12 +48,25 @@ export function Controls({
   const [pendingLength, setPendingLength] = useState(String(Math.round(toDisplayUnits(lengthInches) * 100) / 100));
   const [pendingSpacing, setPendingSpacing] = useState(String(Math.round(toDisplayUnits(pointSpacing) * 100) / 100));
 
-  // Sync pending values when loading a saved design (convert to display units)
+  // Sync pending values when design state changes (e.g., loading a saved design)
   useEffect(() => {
-    setPendingOrientation(pointyTop ? 'pointy' : 'flat');
-    setPendingWidth(String(Math.round(toDisplayUnits(widthInches) * 100) / 100));
-    setPendingLength(String(Math.round(toDisplayUnits(lengthInches) * 100) / 100));
-    setPendingSpacing(String(Math.round(toDisplayUnits(pointSpacing) * 100) / 100));
+    const stateChanged =
+      prevWidthInches.current !== widthInches ||
+      prevLengthInches.current !== lengthInches ||
+      prevPointSpacing.current !== pointSpacing ||
+      prevPointyTop.current !== pointyTop;
+
+    if (stateChanged) {
+      setPendingOrientation(pointyTop ? 'pointy' : 'flat');
+      setPendingWidth(String(Math.round(toDisplayUnits(widthInches) * 100) / 100));
+      setPendingLength(String(Math.round(toDisplayUnits(lengthInches) * 100) / 100));
+      setPendingSpacing(String(Math.round(toDisplayUnits(pointSpacing) * 100) / 100));
+
+      prevWidthInches.current = widthInches;
+      prevLengthInches.current = lengthInches;
+      prevPointSpacing.current = pointSpacing;
+      prevPointyTop.current = pointyTop;
+    }
   }, [pointyTop, widthInches, lengthInches, pointSpacing, toDisplayUnits]);
 
   // Convert pending values when units change
