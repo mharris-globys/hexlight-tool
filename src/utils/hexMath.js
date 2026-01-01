@@ -3,10 +3,11 @@
  *
  * Generates proper hexagonal grids where each vertex connects to exactly 3 neighbors.
  * Supports both pointy-top and flat-top hex orientations.
+ * All dimensions are in inches.
  */
 
-// Spacing between hex centers in feet (edge length of hexagon)
-export const POINT_SPACING = 1.5;
+// Default spacing between adjacent vertices (edge length of hexagon) in inches
+export const DEFAULT_POINT_SPACING = 18; // 18 inches = 1.5 feet
 
 /**
  * Generate a canonical edge key from two vertex keys
@@ -16,37 +17,44 @@ export function getEdgeKey(v1, v2) {
 }
 
 /**
- * Calculate grid dimensions that fit within given feet dimensions
+ * Calculate grid dimensions that fit WITHIN given dimensions (in inches)
+ * Grid will never exceed the requested width/length
  */
-export function getGridDimensions(widthFeet, heightFeet, pointyTop = true) {
-  const edgeLength = POINT_SPACING;
+export function getGridDimensions(widthInches, lengthInches, pointSpacing, pointyTop = true) {
+  const edgeLength = pointSpacing;
 
   if (pointyTop) {
-    const hexWidth = Math.sqrt(3) * edgeLength;
-    const hexHeight = 2 * edgeLength;
-    const horizSpacing = hexWidth;
-    const vertSpacing = 1.5 * edgeLength;
+    // Pointy-top hex geometry
+    const hexWidth = Math.sqrt(3) * edgeLength;  // Width of one hex
+    const hexHeight = 2 * edgeLength;            // Height of one hex
+    const horizSpacing = hexWidth;               // Horizontal distance between hex centers
+    const vertSpacing = 1.5 * edgeLength;        // Vertical distance between hex centers
 
-    const cols = Math.max(1, Math.floor((widthFeet - hexWidth / 2) / horizSpacing) + 1);
-    const rows = Math.max(1, Math.floor((heightFeet - hexHeight / 2) / vertSpacing) + 1);
+    // Calculate max cols/rows that fit within bounds
+    // actualWidth = (cols - 1) * horizSpacing + hexWidth <= widthInches
+    // actualLength = (rows - 1) * vertSpacing + hexHeight <= lengthInches
+    const cols = Math.max(1, Math.floor((widthInches - hexWidth) / horizSpacing) + 1);
+    const rows = Math.max(1, Math.floor((lengthInches - hexHeight) / vertSpacing) + 1);
 
     const actualWidth = (cols - 1) * horizSpacing + hexWidth;
-    const actualHeight = (rows - 1) * vertSpacing + hexHeight;
+    const actualLength = (rows - 1) * vertSpacing + hexHeight;
 
-    return { cols, rows, actualWidth, actualHeight };
+    return { cols, rows, actualWidth, actualLength };
   } else {
-    const hexWidth = 2 * edgeLength;
-    const hexHeight = Math.sqrt(3) * edgeLength;
-    const horizSpacing = 1.5 * edgeLength;
-    const vertSpacing = hexHeight;
+    // Flat-top hex geometry
+    const hexWidth = 2 * edgeLength;             // Width of one hex
+    const hexHeight = Math.sqrt(3) * edgeLength; // Height of one hex
+    const horizSpacing = 1.5 * edgeLength;       // Horizontal distance between hex centers
+    const vertSpacing = hexHeight;               // Vertical distance between hex centers
 
-    const cols = Math.max(1, Math.floor((widthFeet - hexWidth / 2) / horizSpacing) + 1);
-    const rows = Math.max(1, Math.floor((heightFeet - hexHeight / 2) / vertSpacing) + 1);
+    // Calculate max cols/rows that fit within bounds
+    const cols = Math.max(1, Math.floor((widthInches - hexWidth) / horizSpacing) + 1);
+    const rows = Math.max(1, Math.floor((lengthInches - hexHeight) / vertSpacing) + 1);
 
     const actualWidth = (cols - 1) * horizSpacing + hexWidth;
-    const actualHeight = (rows - 1) * vertSpacing + hexHeight;
+    const actualLength = (rows - 1) * vertSpacing + hexHeight;
 
-    return { cols, rows, actualWidth, actualHeight };
+    return { cols, rows, actualWidth, actualLength };
   }
 }
 

@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { saveDesign, loadDesigns, deleteDesign } from '../hooks/useLocalStorage';
-import { POINT_SPACING } from '../utils/hexMath';
 
 /**
  * Controls panel component
+ * All dimensions are in inches
  */
 export function Controls({
-  widthFeet,
-  setWidthFeet,
-  heightFeet,
-  setHeightFeet,
+  widthInches,
+  setWidthInches,
+  lengthInches,
+  setLengthInches,
+  pointSpacing,
+  setPointSpacing,
   pointyTop,
   setPointyTop,
   mirrorMode,
@@ -31,15 +33,17 @@ export function Controls({
 
   // Pending values for "Create New" (start with current values)
   const [pendingOrientation, setPendingOrientation] = useState(pointyTop ? 'pointy' : 'flat');
-  const [pendingWidth, setPendingWidth] = useState(widthFeet);
-  const [pendingHeight, setPendingHeight] = useState(heightFeet);
+  const [pendingWidth, setPendingWidth] = useState(widthInches);
+  const [pendingLength, setPendingLength] = useState(lengthInches);
+  const [pendingSpacing, setPendingSpacing] = useState(pointSpacing);
 
   // Sync pending values when loading a saved design
   useEffect(() => {
     setPendingOrientation(pointyTop ? 'pointy' : 'flat');
-    setPendingWidth(widthFeet);
-    setPendingHeight(heightFeet);
-  }, [pointyTop, widthFeet, heightFeet]);
+    setPendingWidth(widthInches);
+    setPendingLength(lengthInches);
+    setPendingSpacing(pointSpacing);
+  }, [pointyTop, widthInches, lengthInches, pointSpacing]);
 
   const handleSave = () => {
     const name = saveName.trim() || `Design ${Object.keys(savedDesigns).length + 1}`;
@@ -78,27 +82,39 @@ export function Controls({
         <h3>Grid Size</h3>
         <div className="input-row">
           <div className="input-group">
-            <label>Width (ft)</label>
+            <label>Width (in)</label>
             <input
               type="number"
-              min="3"
-              max="50"
-              step="0.5"
+              min="24"
+              max="600"
+              step="1"
               value={pendingWidth}
-              onChange={(e) => setPendingWidth(parseFloat(e.target.value) || 3)}
+              onChange={(e) => setPendingWidth(parseInt(e.target.value) || 24)}
             />
           </div>
           <div className="input-group">
-            <label>Height (ft)</label>
+            <label>Length (in)</label>
             <input
               type="number"
-              min="3"
-              max="50"
-              step="0.5"
-              value={pendingHeight}
-              onChange={(e) => setPendingHeight(parseFloat(e.target.value) || 3)}
+              min="24"
+              max="600"
+              step="1"
+              value={pendingLength}
+              onChange={(e) => setPendingLength(parseInt(e.target.value) || 24)}
             />
           </div>
+        </div>
+
+        <div className="input-group">
+          <label>Point Spacing (in)</label>
+          <input
+            type="number"
+            min="6"
+            max="48"
+            step="1"
+            value={pendingSpacing}
+            onChange={(e) => setPendingSpacing(parseInt(e.target.value) || 18)}
+          />
         </div>
 
         <div className="input-group">
@@ -119,11 +135,14 @@ export function Controls({
             if (newPointyTop !== pointyTop) {
               setPointyTop(newPointyTop);
             }
-            if (pendingWidth !== widthFeet) {
-              setWidthFeet(pendingWidth);
+            if (pendingWidth !== widthInches) {
+              setWidthInches(pendingWidth);
             }
-            if (pendingHeight !== heightFeet) {
-              setHeightFeet(pendingHeight);
+            if (pendingLength !== lengthInches) {
+              setLengthInches(pendingLength);
+            }
+            if (pendingSpacing !== pointSpacing) {
+              setPointSpacing(pendingSpacing);
             }
             onClear();
           }}
@@ -134,8 +153,8 @@ export function Controls({
 
         <div className="grid-info">
           Grid: {gridDimensions.cols} × {gridDimensions.rows * 2} points<br />
-          Actual: {gridDimensions.actualWidth.toFixed(1)}' × {gridDimensions.actualHeight.toFixed(1)}'<br />
-          Point spacing: {POINT_SPACING}' between points
+          Actual: {gridDimensions.actualWidth.toFixed(1)}" × {gridDimensions.actualLength.toFixed(1)}"<br />
+          Point spacing: {pointSpacing}" between points
         </div>
       </div>
 

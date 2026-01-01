@@ -3,17 +3,20 @@ import {
   getGridDimensions,
   generateGrid,
   getMirroredEdges,
-  calculateStats
+  calculateStats,
+  DEFAULT_POINT_SPACING
 } from '../utils/hexMath';
 import { useLocalStorage } from './useLocalStorage';
 
 /**
  * Custom hook for managing hex grid state
+ * All dimensions are in inches
  */
 export function useHexGrid() {
-  // Grid configuration
-  const [widthFeet, setWidthFeet] = useLocalStorage('hexlight-width', 10);
-  const [heightFeet, setHeightFeet] = useLocalStorage('hexlight-height', 8);
+  // Grid configuration (all in inches)
+  const [widthInches, setWidthInches] = useLocalStorage('hexlight-width', 120); // 10 feet
+  const [lengthInches, setLengthInches] = useLocalStorage('hexlight-length', 96); // 8 feet
+  const [pointSpacing, setPointSpacing] = useLocalStorage('hexlight-spacing', DEFAULT_POINT_SPACING);
   const [pointyTop, setPointyTop] = useLocalStorage('hexlight-pointytop', true);
   const [mirrorMode, setMirrorMode] = useLocalStorage('hexlight-mirror', 'none');
 
@@ -30,11 +33,11 @@ export function useHexGrid() {
 
   // Calculate grid dimensions
   const gridDimensions = useMemo(() => {
-    return getGridDimensions(widthFeet, heightFeet, pointyTop);
-  }, [widthFeet, heightFeet, pointyTop]);
+    return getGridDimensions(widthInches, lengthInches, pointSpacing, pointyTop);
+  }, [widthInches, lengthInches, pointSpacing, pointyTop]);
 
-  // Use a consistent pixel size for rendering
-  const pixelSize = 30; // pixels per 1.5 feet
+  // Use a consistent pixel size for rendering (pixels per inch of point spacing)
+  const pixelSize = 30; // pixels per unit of point spacing
 
   // Generate vertices and edges together to ensure consistent vertex keys
   const { vertices, allEdges } = useMemo(() => {
@@ -106,27 +109,29 @@ export function useHexGrid() {
 
   // Get current design state for saving
   const getDesignState = useCallback(() => ({
-    widthFeet,
-    heightFeet,
+    widthInches,
+    lengthInches,
+    pointSpacing,
     pointyTop,
     mirrorMode,
     enabledEdges: enabledEdgesArray,
     maxSegments,
     maxJoints2,
     maxJoints3
-  }), [widthFeet, heightFeet, pointyTop, mirrorMode, enabledEdgesArray, maxSegments, maxJoints2, maxJoints3]);
+  }), [widthInches, lengthInches, pointSpacing, pointyTop, mirrorMode, enabledEdgesArray, maxSegments, maxJoints2, maxJoints3]);
 
   // Load a design state
   const loadDesignState = useCallback((design) => {
-    if (design.widthFeet !== undefined) setWidthFeet(design.widthFeet);
-    if (design.heightFeet !== undefined) setHeightFeet(design.heightFeet);
+    if (design.widthInches !== undefined) setWidthInches(design.widthInches);
+    if (design.lengthInches !== undefined) setLengthInches(design.lengthInches);
+    if (design.pointSpacing !== undefined) setPointSpacing(design.pointSpacing);
     if (design.pointyTop !== undefined) setPointyTop(design.pointyTop);
     if (design.mirrorMode !== undefined) setMirrorMode(design.mirrorMode);
     if (design.enabledEdges !== undefined) setEnabledEdgesArray(design.enabledEdges);
     if (design.maxSegments !== undefined) setMaxSegments(design.maxSegments);
     if (design.maxJoints2 !== undefined) setMaxJoints2(design.maxJoints2);
     if (design.maxJoints3 !== undefined) setMaxJoints3(design.maxJoints3);
-  }, [setWidthFeet, setHeightFeet, setPointyTop, setMirrorMode, setEnabledEdgesArray, setMaxSegments, setMaxJoints2, setMaxJoints3]);
+  }, [setWidthInches, setLengthInches, setPointSpacing, setPointyTop, setMirrorMode, setEnabledEdgesArray, setMaxSegments, setMaxJoints2, setMaxJoints3]);
 
   // Calculate SVG viewBox dimensions
   const viewBox = useMemo(() => {
@@ -148,11 +153,13 @@ export function useHexGrid() {
   }, [vertices, pixelSize]);
 
   return {
-    // Configuration
-    widthFeet,
-    setWidthFeet,
-    heightFeet,
-    setHeightFeet,
+    // Configuration (all in inches)
+    widthInches,
+    setWidthInches,
+    lengthInches,
+    setLengthInches,
+    pointSpacing,
+    setPointSpacing,
     pointyTop,
     setPointyTop,
     mirrorMode,

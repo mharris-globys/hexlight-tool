@@ -10,11 +10,13 @@ function App() {
   const [theme, setTheme] = useLocalStorage('hexlight-theme', 'dark');
 
   const {
-    // Configuration
-    widthFeet,
-    setWidthFeet,
-    heightFeet,
-    setHeightFeet,
+    // Configuration (all in inches)
+    widthInches,
+    setWidthInches,
+    lengthInches,
+    setLengthInches,
+    pointSpacing,
+    setPointSpacing,
     pointyTop,
     setPointyTop,
     mirrorMode,
@@ -64,10 +66,12 @@ function App() {
 
       <main className="main-content">
         <Controls
-          widthFeet={widthFeet}
-          setWidthFeet={setWidthFeet}
-          heightFeet={heightFeet}
-          setHeightFeet={setHeightFeet}
+          widthInches={widthInches}
+          setWidthInches={setWidthInches}
+          lengthInches={lengthInches}
+          setLengthInches={setLengthInches}
+          pointSpacing={pointSpacing}
+          setPointSpacing={setPointSpacing}
           pointyTop={pointyTop}
           setPointyTop={setPointyTop}
           mirrorMode={mirrorMode}
