@@ -83,7 +83,7 @@ export function Stats({
             <span className="stat-value">{layoutWidth.toFixed(1)}{unitLabel}</span>
           </div>
           <div className="stat-item">
-            <span className="stat-label">Height</span>
+            <span className="stat-label">Length</span>
             <span className="stat-value">{layoutHeight.toFixed(1)}{unitLabel}</span>
           </div>
         </div>
