@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { saveDesign, loadDesigns, deleteDesign } from '../hooks/useLocalStorage';
 
 /**
  * Controls panel component
- * All dimensions are in inches
+ * All dimensions stored internally in inches, displayed in current units
  */
 export function Controls({
   widthInches,
@@ -25,37 +25,68 @@ export function Controls({
   gridDimensions,
   onClear,
   getDesignState,
-  loadDesignState
+  loadDesignState,
+  units,
+  toDisplayUnits,
+  toInches
 }) {
+  // Track previous units to detect changes
+  const prevUnits = useRef(units);
+
   // Initialize directly from loadDesigns
   const [savedDesigns, setSavedDesigns] = useState(() => loadDesigns());
   const [saveName, setSaveName] = useState('');
 
-  // Pending values for "Create New" (start with current values)
+  // Pending values for "Create New" (start with current values in display units)
   // Store as strings to allow empty input during editing
   const [pendingOrientation, setPendingOrientation] = useState(pointyTop ? 'pointy' : 'flat');
-  const [pendingWidth, setPendingWidth] = useState(String(widthInches));
-  const [pendingLength, setPendingLength] = useState(String(lengthInches));
-  const [pendingSpacing, setPendingSpacing] = useState(String(pointSpacing));
+  const [pendingWidth, setPendingWidth] = useState(String(Math.round(toDisplayUnits(widthInches) * 100) / 100));
+  const [pendingLength, setPendingLength] = useState(String(Math.round(toDisplayUnits(lengthInches) * 100) / 100));
+  const [pendingSpacing, setPendingSpacing] = useState(String(Math.round(toDisplayUnits(pointSpacing) * 100) / 100));
 
-  // Sync pending values when loading a saved design
+  // Sync pending values when loading a saved design (convert to display units)
   useEffect(() => {
     setPendingOrientation(pointyTop ? 'pointy' : 'flat');
-    setPendingWidth(String(widthInches));
-    setPendingLength(String(lengthInches));
-    setPendingSpacing(String(pointSpacing));
-  }, [pointyTop, widthInches, lengthInches, pointSpacing]);
+    setPendingWidth(String(Math.round(toDisplayUnits(widthInches) * 100) / 100));
+    setPendingLength(String(Math.round(toDisplayUnits(lengthInches) * 100) / 100));
+    setPendingSpacing(String(Math.round(toDisplayUnits(pointSpacing) * 100) / 100));
+  }, [pointyTop, widthInches, lengthInches, pointSpacing, toDisplayUnits]);
 
-  // Validation for dimension inputs
+  // Convert pending values when units change
+  useEffect(() => {
+    if (prevUnits.current !== units) {
+      // Convert existing pending values to new units
+      const conversionFactor = units === 'cm' ? 2.54 : 1 / 2.54;
+
+      const convertValue = (strVal) => {
+        const num = parseFloat(strVal);
+        if (isNaN(num)) return strVal;
+        return String(Math.round(num * conversionFactor * 100) / 100);
+      };
+
+      setPendingWidth(convertValue(pendingWidth));
+      setPendingLength(convertValue(pendingLength));
+      setPendingSpacing(convertValue(pendingSpacing));
+
+      prevUnits.current = units;
+    }
+  }, [units, pendingWidth, pendingLength, pendingSpacing]);
+
+  // Validation for dimension inputs (in current display units)
+  const minDim = units === 'cm' ? 61 : 24;    // ~24 inches
+  const maxDim = units === 'cm' ? 1524 : 600; // ~600 inches
+  const minSpacing = units === 'cm' ? 15 : 6; // ~6 inches
+  const maxSpacing = units === 'cm' ? 122 : 48; // ~48 inches
+
   const isValidDimension = (value, min, max) => {
-    const num = parseInt(value);
+    const num = parseFloat(value);
     return !isNaN(num) && num >= min && num <= max;
   };
 
   const isFormValid =
-    isValidDimension(pendingWidth, 24, 600) &&
-    isValidDimension(pendingLength, 24, 600) &&
-    isValidDimension(pendingSpacing, 6, 48);
+    isValidDimension(pendingWidth, minDim, maxDim) &&
+    isValidDimension(pendingLength, minDim, maxDim) &&
+    isValidDimension(pendingSpacing, minSpacing, maxSpacing);
 
   const handleSave = () => {
     const name = saveName.trim() || `Design ${Object.keys(savedDesigns).length + 1}`;
@@ -87,6 +118,8 @@ export function Controls({
     { value: 'radial', label: 'Radial (180°)' }
   ];
 
+  const unitLabel = units === 'cm' ? 'cm' : 'in';
+
   return (
     <div className="panel">
       {/* Grid Size Section */}
@@ -94,23 +127,23 @@ export function Controls({
         <h3>Grid Size</h3>
         <div className="input-row">
           <div className="input-group">
-            <label>Width (in)</label>
+            <label>Width ({unitLabel})</label>
             <input
               type="number"
-              min="24"
-              max="600"
-              step="1"
+              min={minDim}
+              max={maxDim}
+              step="0.01"
               value={pendingWidth}
               onChange={(e) => setPendingWidth(e.target.value)}
             />
           </div>
           <div className="input-group">
-            <label>Length (in)</label>
+            <label>Length ({unitLabel})</label>
             <input
               type="number"
-              min="24"
-              max="600"
-              step="1"
+              min={minDim}
+              max={maxDim}
+              step="0.01"
               value={pendingLength}
               onChange={(e) => setPendingLength(e.target.value)}
             />
@@ -118,12 +151,12 @@ export function Controls({
         </div>
 
         <div className="input-group">
-          <label>Point Spacing (in)</label>
+          <label>Point Spacing ({unitLabel})</label>
           <input
             type="number"
-            min="6"
-            max="48"
-            step="1"
+            min={minSpacing}
+            max={maxSpacing}
+            step="0.01"
             value={pendingSpacing}
             onChange={(e) => setPendingSpacing(e.target.value)}
           />
@@ -146,9 +179,10 @@ export function Controls({
           onClick={() => {
             if (!isFormValid) return;
             const newPointyTop = pendingOrientation === 'pointy';
-            const newWidth = parseInt(pendingWidth);
-            const newLength = parseInt(pendingLength);
-            const newSpacing = parseInt(pendingSpacing);
+            // Convert display units to inches for storage
+            const newWidth = Math.round(toInches(parseFloat(pendingWidth)));
+            const newLength = Math.round(toInches(parseFloat(pendingLength)));
+            const newSpacing = Math.round(toInches(parseFloat(pendingSpacing)));
 
             if (newPointyTop !== pointyTop) {
               setPointyTop(newPointyTop);
@@ -171,8 +205,8 @@ export function Controls({
 
         <div className="grid-info">
           Grid: {gridDimensions.cols} × {gridDimensions.rows * 2} points<br />
-          Actual: {gridDimensions.actualWidth.toFixed(1)}" × {gridDimensions.actualLength.toFixed(1)}"<br />
-          Point spacing: {pointSpacing}" between points
+          Actual: {toDisplayUnits(gridDimensions.actualWidth).toFixed(1)}{unitLabel} × {toDisplayUnits(gridDimensions.actualLength).toFixed(1)}{unitLabel}<br />
+          Point spacing: {toDisplayUnits(pointSpacing).toFixed(1)}{unitLabel} between points
         </div>
       </div>
 

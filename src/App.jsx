@@ -1,16 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useHexGrid } from './hooks/useHexGrid';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { HexGrid } from './components/HexGrid';
 import { Controls } from './components/Controls';
 import { Stats } from './components/Stats';
 import { ThemeToggle } from './components/ThemeToggle';
+import { UnitToggle } from './components/UnitToggle';
+
+// Conversion factor: 1 inch = 2.54 cm
+const INCH_TO_CM = 2.54;
 
 function App() {
   const [theme, setTheme] = useLocalStorage('hexlight-theme', 'dark');
+  const [units, setUnits] = useLocalStorage('hexlight-units', 'in');
 
   const {
-    // Configuration (all in inches)
+    // Configuration (all stored internally in inches)
     widthInches,
     setWidthInches,
     lengthInches,
@@ -37,6 +42,7 @@ function App() {
     allEdges,
     enabledEdges,
     viewBox,
+    pixelSize,
 
     // Statistics
     stats,
@@ -47,6 +53,21 @@ function App() {
     getDesignState,
     loadDesignState
   } = useHexGrid();
+
+  // Convert inches to display units
+  const toDisplayUnits = useCallback((inches) => {
+    return units === 'cm' ? inches * INCH_TO_CM : inches;
+  }, [units]);
+
+  // Convert display units to inches
+  const toInches = useCallback((value) => {
+    return units === 'cm' ? value / INCH_TO_CM : value;
+  }, [units]);
+
+  // Handle unit toggle - convert all stored values
+  const handleUnitToggle = useCallback(() => {
+    setUnits(prev => prev === 'in' ? 'cm' : 'in');
+  }, [setUnits]);
 
   // Apply theme to document
   useEffect(() => {
@@ -61,7 +82,10 @@ function App() {
     <div className="app">
       <header className="header">
         <h1>Hex Light Designer</h1>
-        <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
+        <div className="header-controls">
+          <UnitToggle units={units} onToggle={handleUnitToggle} />
+          <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
+        </div>
       </header>
 
       <main className="main-content">
@@ -86,6 +110,9 @@ function App() {
           onClear={clearAll}
           getDesignState={getDesignState}
           loadDesignState={loadDesignState}
+          units={units}
+          toDisplayUnits={toDisplayUnits}
+          toInches={toInches}
         />
 
         <div className="grid-container">
@@ -107,6 +134,10 @@ function App() {
           maxJoints2={maxJoints2}
           maxJoints3={maxJoints3}
           limitsExceeded={limitsExceeded}
+          units={units}
+          toDisplayUnits={toDisplayUnits}
+          pointSpacing={pointSpacing}
+          pixelSize={pixelSize}
         />
       </main>
     </div>

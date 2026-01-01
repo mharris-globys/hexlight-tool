@@ -88,6 +88,32 @@ body {
   color: var(--text-primary);
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Unit Toggle */
+.unit-toggle {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 2.5rem;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.unit-toggle:hover {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-primary);
+}
+
 .main-content {
   display: grid;
   grid-template-columns: 280px 1fr 220px;

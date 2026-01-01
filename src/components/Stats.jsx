@@ -6,10 +6,25 @@ export function Stats({
   maxSegments,
   maxJoints2,
   maxJoints3,
-  limitsExceeded
+  limitsExceeded,
+  units,
+  toDisplayUnits,
+  pointSpacing,
+  pixelSize
 }) {
   const formatLimit = (max) => max > 0 ? `/ ${max}` : '';
   const hasMissingJoints = stats.joints1 > 0;
+  const unitLabel = units === 'cm' ? 'cm' : 'in';
+
+  // Convert bounding box from pixels to real units
+  // pixels / pixelSize * pointSpacing = inches, then convert to display units
+  const pixelsToUnits = (pixels) => {
+    const inches = (pixels / pixelSize) * pointSpacing;
+    return toDisplayUnits(inches);
+  };
+
+  const layoutWidth = stats.boundingBox ? pixelsToUnits(stats.boundingBox.width) : 0;
+  const layoutHeight = stats.boundingBox ? pixelsToUnits(stats.boundingBox.height) : 0;
 
   return (
     <div className="panel">
@@ -59,6 +74,20 @@ export function Stats({
           </div>
         )}
       </div>
+
+      {stats.segments > 0 && (
+        <div className="panel-section">
+          <h3>Layout Size</h3>
+          <div className="stat-item">
+            <span className="stat-label">Width</span>
+            <span className="stat-value">{layoutWidth.toFixed(1)}{unitLabel}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Height</span>
+            <span className="stat-value">{layoutHeight.toFixed(1)}{unitLabel}</span>
+          </div>
+        </div>
+      )}
 
       <div className="panel-section">
         <h3>Legend</h3>

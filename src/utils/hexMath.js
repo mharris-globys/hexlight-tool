@@ -423,16 +423,39 @@ export function getMirroredEdges(edgeKey, mirrorMode, cols, rows, pointyTop, ver
 
 /**
  * Calculate statistics from enabled edges
+ * Includes bounding box of enabled segments
  */
-export function calculateStats(enabledEdges, allEdges) {
+export function calculateStats(enabledEdges, allEdges, vertices) {
   const segments = enabledEdges.size;
   const jointCounts = new Map();
 
-  // Count edges per vertex
+  // Track bounding box of enabled edges
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+
+  // Count edges per vertex and calculate bounding box
   for (const edge of allEdges) {
     if (enabledEdges.has(edge.key)) {
       jointCounts.set(edge.v1, (jointCounts.get(edge.v1) || 0) + 1);
       jointCounts.set(edge.v2, (jointCounts.get(edge.v2) || 0) + 1);
+
+      // Update bounding box
+      if (vertices) {
+        const v1 = vertices.get(edge.v1);
+        const v2 = vertices.get(edge.v2);
+        if (v1) {
+          minX = Math.min(minX, v1.x);
+          maxX = Math.max(maxX, v1.x);
+          minY = Math.min(minY, v1.y);
+          maxY = Math.max(maxY, v1.y);
+        }
+        if (v2) {
+          minX = Math.min(minX, v2.x);
+          maxX = Math.max(maxX, v2.x);
+          minY = Math.min(minY, v2.y);
+          maxY = Math.max(maxY, v2.y);
+        }
+      }
     }
   }
 
@@ -446,5 +469,11 @@ export function calculateStats(enabledEdges, allEdges) {
     else if (count >= 3) joints3++;
   }
 
-  return { segments, joints1, joints2, joints3, jointCounts };
+  // Calculate bounding box dimensions (0 if no edges enabled)
+  const boundingBox = segments > 0 ? {
+    width: maxX - minX,
+    height: maxY - minY
+  } : { width: 0, height: 0 };
+
+  return { segments, joints1, joints2, joints3, jointCounts, boundingBox };
 }

@@ -65,10 +65,10 @@ export function useHexGrid() {
     return valid;
   }, [enabledEdges, allEdges]);
 
-  // Calculate statistics
+  // Calculate statistics (pass vertices for bounding box calculation)
   const stats = useMemo(() => {
-    return calculateStats(validEnabledEdges, allEdges);
-  }, [validEnabledEdges, allEdges]);
+    return calculateStats(validEnabledEdges, allEdges, vertices);
+  }, [validEnabledEdges, allEdges, vertices]);
 
   // Check if limits are exceeded
   const limitsExceeded = useMemo(() => ({
