@@ -32,18 +32,30 @@ export function Controls({
   const [saveName, setSaveName] = useState('');
 
   // Pending values for "Create New" (start with current values)
+  // Store as strings to allow empty input during editing
   const [pendingOrientation, setPendingOrientation] = useState(pointyTop ? 'pointy' : 'flat');
-  const [pendingWidth, setPendingWidth] = useState(widthInches);
-  const [pendingLength, setPendingLength] = useState(lengthInches);
-  const [pendingSpacing, setPendingSpacing] = useState(pointSpacing);
+  const [pendingWidth, setPendingWidth] = useState(String(widthInches));
+  const [pendingLength, setPendingLength] = useState(String(lengthInches));
+  const [pendingSpacing, setPendingSpacing] = useState(String(pointSpacing));
 
   // Sync pending values when loading a saved design
   useEffect(() => {
     setPendingOrientation(pointyTop ? 'pointy' : 'flat');
-    setPendingWidth(widthInches);
-    setPendingLength(lengthInches);
-    setPendingSpacing(pointSpacing);
+    setPendingWidth(String(widthInches));
+    setPendingLength(String(lengthInches));
+    setPendingSpacing(String(pointSpacing));
   }, [pointyTop, widthInches, lengthInches, pointSpacing]);
+
+  // Validation for dimension inputs
+  const isValidDimension = (value, min, max) => {
+    const num = parseInt(value);
+    return !isNaN(num) && num >= min && num <= max;
+  };
+
+  const isFormValid =
+    isValidDimension(pendingWidth, 24, 600) &&
+    isValidDimension(pendingLength, 24, 600) &&
+    isValidDimension(pendingSpacing, 6, 48);
 
   const handleSave = () => {
     const name = saveName.trim() || `Design ${Object.keys(savedDesigns).length + 1}`;
@@ -89,7 +101,7 @@ export function Controls({
               max="600"
               step="1"
               value={pendingWidth}
-              onChange={(e) => setPendingWidth(parseInt(e.target.value) || 24)}
+              onChange={(e) => setPendingWidth(e.target.value)}
             />
           </div>
           <div className="input-group">
@@ -100,7 +112,7 @@ export function Controls({
               max="600"
               step="1"
               value={pendingLength}
-              onChange={(e) => setPendingLength(parseInt(e.target.value) || 24)}
+              onChange={(e) => setPendingLength(e.target.value)}
             />
           </div>
         </div>
@@ -113,7 +125,7 @@ export function Controls({
             max="48"
             step="1"
             value={pendingSpacing}
-            onChange={(e) => setPendingSpacing(parseInt(e.target.value) || 18)}
+            onChange={(e) => setPendingSpacing(e.target.value)}
           />
         </div>
 
@@ -130,19 +142,25 @@ export function Controls({
 
         <button
           className="primary"
+          disabled={!isFormValid}
           onClick={() => {
+            if (!isFormValid) return;
             const newPointyTop = pendingOrientation === 'pointy';
+            const newWidth = parseInt(pendingWidth);
+            const newLength = parseInt(pendingLength);
+            const newSpacing = parseInt(pendingSpacing);
+
             if (newPointyTop !== pointyTop) {
               setPointyTop(newPointyTop);
             }
-            if (pendingWidth !== widthInches) {
-              setWidthInches(pendingWidth);
+            if (newWidth !== widthInches) {
+              setWidthInches(newWidth);
             }
-            if (pendingLength !== lengthInches) {
-              setLengthInches(pendingLength);
+            if (newLength !== lengthInches) {
+              setLengthInches(newLength);
             }
-            if (pendingSpacing !== pointSpacing) {
-              setPointSpacing(pendingSpacing);
+            if (newSpacing !== pointSpacing) {
+              setPointSpacing(newSpacing);
             }
             onClear();
           }}

@@ -19,49 +19,71 @@ export function getEdgeKey(v1, v2) {
 /**
  * Calculate grid dimensions that fit WITHIN given dimensions (in inches)
  * Grid will never exceed the requested width/length
+ * Returns separate counts for even/odd rows or columns to handle stagger
  */
 export function getGridDimensions(widthInches, lengthInches, pointSpacing, pointyTop = true) {
   const edgeLength = pointSpacing;
 
   if (pointyTop) {
     // Pointy-top hex geometry
+    // Odd ROWS are offset right, so they may need fewer columns
     const hexWidth = Math.sqrt(3) * edgeLength;  // Width of one hex
     const hexHeight = 2 * edgeLength;            // Height of one hex
     const horizSpacing = hexWidth;               // Horizontal distance between hex centers
     const vertSpacing = 1.5 * edgeLength;        // Vertical distance between hex centers
+    const staggerOffset = horizSpacing / 2;      // Odd rows are offset right by this amount
 
-    // Calculate max cols/rows that fit within bounds
-    // actualWidth = (cols - 1) * horizSpacing + hexWidth <= widthInches
-    // actualLength = (rows - 1) * vertSpacing + hexHeight <= lengthInches
-    const cols = Math.max(1, Math.floor((widthInches - hexWidth) / horizSpacing) + 1);
+    // Calculate rows (same for all columns in pointy-top)
     const rows = Math.max(1, Math.floor((lengthInches - hexHeight) / vertSpacing) + 1);
 
-    const actualWidth = (cols - 1) * horizSpacing + hexWidth;
+    // Calculate cols separately for even and odd rows
+    // Even rows: no offset, full width available
+    // Odd rows: offset right, so they can fit fewer cols to stay within bounds
+    const colsEven = Math.max(1, Math.floor((widthInches - hexWidth) / horizSpacing) + 1);
+    const colsOdd = rows > 1
+      ? Math.max(1, Math.floor((widthInches - hexWidth - staggerOffset) / horizSpacing) + 1)
+      : colsEven; // Use same as even if only 1 row
+
+    // Actual width is based on even rows (primary grid extent)
+    const actualWidth = (colsEven - 1) * horizSpacing + hexWidth;
     const actualLength = (rows - 1) * vertSpacing + hexHeight;
 
-    return { cols, rows, actualWidth, actualLength };
+    // For pointy-top: cols/colsOdd vary by row, rows/rowsOdd are same (no vertical stagger)
+    return { cols: colsEven, colsOdd, rows, rowsOdd: rows, actualWidth, actualLength };
   } else {
     // Flat-top hex geometry
+    // Odd COLUMNS are offset down, so they may need fewer rows
     const hexWidth = 2 * edgeLength;             // Width of one hex
     const hexHeight = Math.sqrt(3) * edgeLength; // Height of one hex
     const horizSpacing = 1.5 * edgeLength;       // Horizontal distance between hex centers
     const vertSpacing = hexHeight;               // Vertical distance between hex centers
+    const staggerOffset = vertSpacing / 2;       // Odd columns are offset down by this amount
 
-    // Calculate max cols/rows that fit within bounds
+    // Calculate cols (same for all rows in flat-top)
     const cols = Math.max(1, Math.floor((widthInches - hexWidth) / horizSpacing) + 1);
-    const rows = Math.max(1, Math.floor((lengthInches - hexHeight) / vertSpacing) + 1);
 
+    // Calculate rows separately for even and odd columns
+    // Even columns: no offset, full length available
+    // Odd columns: offset down, so they can fit fewer rows to stay within bounds
+    const rowsEven = Math.max(1, Math.floor((lengthInches - hexHeight) / vertSpacing) + 1);
+    const rowsOdd = cols > 1
+      ? Math.max(1, Math.floor((lengthInches - hexHeight - staggerOffset) / vertSpacing) + 1)
+      : rowsEven; // Use same as even if only 1 column
+
+    // Actual length is based on even columns (primary grid extent)
     const actualWidth = (cols - 1) * horizSpacing + hexWidth;
-    const actualLength = (rows - 1) * vertSpacing + hexHeight;
+    const actualLength = (rowsEven - 1) * vertSpacing + hexHeight;
 
-    return { cols, rows, actualWidth, actualLength };
+    // For flat-top: rows/rowsOdd vary by column, cols/colsOdd are same (no horizontal stagger)
+    return { cols, colsOdd: cols, rows: rowsEven, rowsOdd, actualWidth, actualLength };
   }
 }
 
 /**
  * Generate hex centers for the grid
+ * Supports ragged grids where even/odd rows or columns have different counts
  */
-function generateHexCenters(cols, rows, size, pointyTop) {
+function generateHexCenters(cols, colsOdd, rows, rowsOdd, size, pointyTop) {
   const centers = [];
 
   if (pointyTop) {
@@ -69,7 +91,9 @@ function generateHexCenters(cols, rows, size, pointyTop) {
     const vertSpacing = 1.5 * size;
 
     for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
+      // Odd rows may have fewer columns
+      const maxCols = (row % 2 === 1) ? (colsOdd || cols) : cols;
+      for (let col = 0; col < maxCols; col++) {
         const xOffset = (row % 2 === 1) ? horizSpacing / 2 : 0;
         const x = col * horizSpacing + xOffset + horizSpacing / 2;
         const y = row * vertSpacing + size;
@@ -80,8 +104,10 @@ function generateHexCenters(cols, rows, size, pointyTop) {
     const horizSpacing = 1.5 * size;
     const vertSpacing = Math.sqrt(3) * size;
 
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
+    for (let col = 0; col < cols; col++) {
+      // Odd columns may have fewer rows
+      const maxRows = (col % 2 === 1) ? (rowsOdd || rows) : rows;
+      for (let row = 0; row < maxRows; row++) {
         const yOffset = (col % 2 === 1) ? vertSpacing / 2 : 0;
         const x = col * horizSpacing + size;
         const y = row * vertSpacing + yOffset + vertSpacing / 2;
@@ -115,9 +141,10 @@ function getHexVertices(cx, cy, size, pointyTop) {
 /**
  * Generate both vertices and edges for a hex grid
  * This ensures edges use the exact same vertex keys as the vertices map
+ * Supports ragged grids with colsOdd/rowsOdd for staggered layouts
  */
-export function generateGrid(cols, rows, size, pointyTop = true) {
-  const centers = generateHexCenters(cols, rows, size, pointyTop);
+export function generateGrid(cols, colsOdd, rows, rowsOdd, size, pointyTop = true) {
+  const centers = generateHexCenters(cols, colsOdd, rows, rowsOdd, size, pointyTop);
 
   // First pass: collect all vertices and assign unique integer IDs
   // Use spatial comparison to deduplicate vertices
@@ -181,13 +208,13 @@ export function generateGrid(cols, rows, size, pointyTop = true) {
 }
 
 // Wrapper functions for compatibility
-export function generateGridVertices(cols, rows, size, pointyTop = true) {
-  const { vertices } = generateGrid(cols, rows, size, pointyTop);
+export function generateGridVertices(cols, colsOdd, rows, rowsOdd, size, pointyTop = true) {
+  const { vertices } = generateGrid(cols, colsOdd, rows, rowsOdd, size, pointyTop);
   return vertices;
 }
 
-export function generateGridEdges(cols, rows, size, pointyTop = true) {
-  const { edges } = generateGrid(cols, rows, size, pointyTop);
+export function generateGridEdges(cols, colsOdd, rows, rowsOdd, size, pointyTop = true) {
+  const { edges } = generateGrid(cols, colsOdd, rows, rowsOdd, size, pointyTop);
   return edges;
 }
 
@@ -242,30 +269,30 @@ export function calculateMirrorAxes(vertices, pointyTop = true) {
   const validYPositions = [];
 
   for (let i = 0; i < sortedX.length; i++) {
-    // For pointy-top, vertices are valid for vertical axis
+    // For pointy-top, ONLY vertices are valid (no horizontal edges to bisect)
     if (pointyTop) {
       validXPositions.push(sortedX[i]);
     }
     if (i < sortedX.length - 1) {
       const gap = sortedX[i + 1] - sortedX[i];
       // For flat-top, only include midpoints of large gaps (bisects horizontal segments)
-      // For pointy-top, include all midpoints
-      if (pointyTop || gap > maxXGap * largeGapThreshold) {
+      // For pointy-top, NO midpoints (no horizontal edges exist)
+      if (!pointyTop && gap > maxXGap * largeGapThreshold) {
         validXPositions.push((sortedX[i] + sortedX[i + 1]) / 2);
       }
     }
   }
 
   for (let i = 0; i < sortedY.length; i++) {
-    // For flat-top, vertices are valid for horizontal axis
+    // For flat-top, ONLY vertices are valid (no vertical edges to bisect)
     if (!pointyTop) {
       validYPositions.push(sortedY[i]);
     }
     if (i < sortedY.length - 1) {
       const gap = sortedY[i + 1] - sortedY[i];
       // For pointy-top, only include midpoints of large gaps (bisects vertical segments)
-      // For flat-top, include all midpoints
-      if (!pointyTop || gap > maxYGap * largeGapThreshold) {
+      // For flat-top, NO midpoints (no vertical edges exist)
+      if (pointyTop && gap > maxYGap * largeGapThreshold) {
         validYPositions.push((sortedY[i] + sortedY[i + 1]) / 2);
       }
     }
@@ -292,18 +319,7 @@ export function calculateMirrorAxes(vertices, pointyTop = true) {
       }
     }
 
-    // If exactly centered, nudge towards smaller side
-    if (Math.abs(best - center) < 0.001) {
-      const sorted = [...positions].sort((a, b) => a - b);
-      const idx = sorted.findIndex(p => Math.abs(p - best) < 0.001);
-      if (idx > 0 && idx < sorted.length - 1) {
-        const nudged = sorted[idx - 1];
-        if (Math.abs(nudged - center) < Math.abs(sorted[idx + 1] - center) * 1.5) {
-          return nudged;
-        }
-      }
-    }
-
+    // If center is exactly on a valid position, use it (no nudging)
     return best;
   };
 

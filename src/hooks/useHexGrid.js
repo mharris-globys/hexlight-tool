@@ -40,15 +40,18 @@ export function useHexGrid() {
   const pixelSize = 30; // pixels per unit of point spacing
 
   // Generate vertices and edges together to ensure consistent vertex keys
+  // Pass separate counts for even/odd rows or columns (ragged grid support)
   const { vertices, allEdges } = useMemo(() => {
     const grid = generateGrid(
       gridDimensions.cols,
+      gridDimensions.colsOdd,
       gridDimensions.rows,
+      gridDimensions.rowsOdd,
       pixelSize,
       pointyTop
     );
     return { vertices: grid.vertices, allEdges: grid.edges };
-  }, [gridDimensions.cols, gridDimensions.rows, pixelSize, pointyTop]);
+  }, [gridDimensions.cols, gridDimensions.colsOdd, gridDimensions.rows, gridDimensions.rowsOdd, pixelSize, pointyTop]);
 
   // Filter enabled edges to only include valid edges for current grid
   const validEnabledEdges = useMemo(() => {

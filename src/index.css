@@ -191,9 +191,26 @@ button.primary {
   color: var(--bg-primary);
 }
 
-button.primary:hover {
+button.primary:hover:not(:disabled) {
   background-color: var(--accent-hover);
   border-color: var(--accent-hover);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  background-color: var(--bg-panel);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+button.primary:disabled:hover {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-primary);
 }
 
 button.danger {
