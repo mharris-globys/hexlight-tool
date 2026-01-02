@@ -6,6 +6,7 @@ import { Controls } from './components/Controls';
 import { Stats } from './components/Stats';
 import { ThemeToggle } from './components/ThemeToggle';
 import { UnitToggle } from './components/UnitToggle';
+import { GuideToggle } from './components/GuideToggle';
 
 // Conversion factor: 1 inch = 2.54 cm
 const INCH_TO_CM = 2.54;
@@ -13,6 +14,7 @@ const INCH_TO_CM = 2.54;
 function App() {
   const [theme, setTheme] = useLocalStorage('hexlight-theme', 'dark');
   const [units, setUnits] = useLocalStorage('hexlight-units', 'in');
+  const [showGuides, setShowGuides] = useLocalStorage('hexlight-guides', true);
 
   const {
     // Configuration (internal storage: inches - see useHexGrid for details)
@@ -83,6 +85,7 @@ function App() {
       <header className="header">
         <h1>Hex Light Designer</h1>
         <div className="header-controls">
+          <GuideToggle showGuides={showGuides} onToggle={() => setShowGuides(prev => !prev)} />
           <UnitToggle units={units} onToggle={handleUnitToggle} />
           <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
         </div>
@@ -125,6 +128,7 @@ function App() {
             jointCounts={stats.jointCounts}
             mirrorMode={mirrorMode}
             pointyTop={pointyTop}
+            showGuides={showGuides}
           />
         </div>
 

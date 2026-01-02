@@ -12,7 +12,8 @@ export function HexGrid({
   onEdgeClick,
   jointCounts,
   mirrorMode,
-  pointyTop
+  pointyTop,
+  showGuides = true
 }) {
   // Calculate grid bounds and snapped mirror axis positions (orientation-aware)
   const gridBounds = useMemo(() => {
@@ -25,10 +26,15 @@ export function HexGrid({
 
     for (const [key, vertex] of vertices) {
       const jointCount = jointCounts?.get(key) || 0;
+
+      // In preview mode, only show vertices that are part of the design
+      if (!showGuides && jointCount === 0) continue;
+
       let className = 'hex-vertex';
       if (jointCount === 1) className += ' missing';
       else if (jointCount === 2) className += ' active-2';
       else if (jointCount >= 3) className += ' active-3';
+      if (!showGuides) className += ' preview-mode';
 
       elements.push(
         <circle
@@ -42,7 +48,7 @@ export function HexGrid({
     }
 
     return elements;
-  }, [vertices, jointCounts]);
+  }, [vertices, jointCounts, showGuides]);
 
   // Create edge elements
   const edgeElements = useMemo(() => {
@@ -55,20 +61,26 @@ export function HexGrid({
       if (!v1 || !v2) continue;
 
       const isEnabled = enabledEdges.has(edge.key);
+
+      // In preview mode, skip disabled edges entirely
+      if (!showGuides && !isEnabled) continue;
+
       const className = `hex-edge${isEnabled ? ' enabled' : ''}`;
 
-      // Hitbox for easier clicking
-      elements.push(
-        <line
-          key={`h-${edge.key}`}
-          x1={v1.x}
-          y1={v1.y}
-          x2={v2.x}
-          y2={v2.y}
-          className="hex-edge-hitbox"
-          onClick={() => onEdgeClick(edge.key)}
-        />
-      );
+      // Hitbox for easier clicking (only when guides are shown)
+      if (showGuides) {
+        elements.push(
+          <line
+            key={`h-${edge.key}`}
+            x1={v1.x}
+            y1={v1.y}
+            x2={v2.x}
+            y2={v2.y}
+            className="hex-edge-hitbox"
+            onClick={() => onEdgeClick(edge.key)}
+          />
+        );
+      }
 
       // Visible edge
       elements.push(
@@ -79,17 +91,17 @@ export function HexGrid({
           x2={v2.x}
           y2={v2.y}
           className={className}
-          onClick={() => onEdgeClick(edge.key)}
+          onClick={showGuides ? () => onEdgeClick(edge.key) : undefined}
         />
       );
     }
 
     return elements;
-  }, [allEdges, vertices, enabledEdges, onEdgeClick]);
+  }, [allEdges, vertices, enabledEdges, onEdgeClick, showGuides]);
 
-  // Create mirror axis guide lines
+  // Create mirror axis guide lines (hidden in preview mode)
   const mirrorGuides = useMemo(() => {
-    if (mirrorMode === 'none') return null;
+    if (!showGuides || mirrorMode === 'none') return null;
 
     const { minX, maxX, minY, maxY, centerX, centerY } = gridBounds;
     const padding = 10;
@@ -153,7 +165,7 @@ export function HexGrid({
     }
 
     return elements;
-  }, [mirrorMode, gridBounds]);
+  }, [showGuides, mirrorMode, gridBounds]);
 
   const viewBoxString = `${viewBox.minX} ${viewBox.minY} ${viewBox.width} ${viewBox.height}`;
 
